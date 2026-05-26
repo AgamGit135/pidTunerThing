@@ -449,10 +449,13 @@ class PIDTunerApp:
             return
 
         dt_ms = max(1, int(round(self.params["dt_ms"].get())))
+        dt_noise = np.random.normal(loc=0,scale=dt_ms/5)
+        dt_ms = max(0,dt_ms + dt_noise) # clamp s.t. no values are negative
+        print(dt_ms)
         dt    = dt_ms / 1000.0
 
         # Run enough steps to fill one GUI frame
-        steps = max(1, GUI_UPDATE_MS // dt_ms)
+        steps = int(max(1, np.ceil(GUI_UPDATE_MS // dt_ms)))
 
         # Setpoint is in RPM -> normalise to [0, 1] for the controller
         sp_rpm = float(np.clip(self.params["setpoint"].get(), 0.0, MAX_RPM))
