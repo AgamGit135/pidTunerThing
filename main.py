@@ -16,6 +16,14 @@ Ziegler-Nichols (P-only, Ki=Kd=F=0):
               Ultimate period  Tu = 2*pi*tau/sqrt(3)  ~  3.63*tau
 """
 
+"""
+TODO:
+ * change graphs to show only k most recent readouts (like dashboard)
+ * add kS
+ * add noise checkboxes to GUI
+ * 
+"""
+
 import tkinter as tk
 from tkinter import ttk
 import numpy as np
@@ -103,6 +111,10 @@ class MotorModel:
     @property
     def speed_norm(self) -> float:
         return self.x3
+    
+    # simulate sensor noise (hopefully)
+    def get_noisy_speed_readout(self) -> float:
+        return self.x3 + np.random.normal(0, 0.01)
 
     def reset(self):
         self.x1 = self.x2 = self.x3 = 0.0
@@ -451,7 +463,6 @@ class PIDTunerApp:
         dt_ms = max(1, int(round(self.params["dt_ms"].get())))
         dt_noise = np.random.normal(loc=0,scale=dt_ms/5)
         dt_ms = max(0,dt_ms + dt_noise) # clamp s.t. no values are negative
-        print(dt_ms)
         dt    = dt_ms / 1000.0
 
         # Run enough steps to fill one GUI frame
@@ -470,10 +481,11 @@ class PIDTunerApp:
         last = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         for _ in range(steps):
-            meas = self.motor.speed_norm
+            meas = self.motor.get_noisy_speed_readout()
             output, P, I, D, ff, error = self.pid.compute(
                 sp, meas, dt, Kp, Ki, Kd, F)
-            speed_rpm = self.motor.update(output, dt, tau)
+            self.motor.update(output, dt, tau)
+            speed_rpm = self.motor.get_noisy_speed_readout()*MAX_RPM
 
             self.sim_time += dt
             self.t_buf.append(self.sim_time)
