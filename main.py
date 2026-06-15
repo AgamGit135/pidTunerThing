@@ -1,6 +1,6 @@
 """
 PID Controller Tuner GUI
-========================
+
 Simulates a motor speed controller with PID + Feed-forward (F).
 
 Motor model : three cascaded first-order lags  G(s) = 1/(τs+1)³
